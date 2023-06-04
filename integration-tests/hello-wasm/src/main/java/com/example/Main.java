@@ -24,9 +24,13 @@ import am.ik.json.JsonObject;
 
 public class Main {
 	public static void main(String[] args) throws Exception {
-		final String request = readString(System.in);
-		final JsonObject node = Json.parse(request).asObject();
-		final String response = "{\"data\":\"Hello " + node.get("body").asString().replace("\"", "\\\"") + "!\"}";
+		final JsonObject request = Json.parse(readString(System.in)).asObject();
+		final JsonObject response = new JsonObject()
+				.put("data", "Hello " + request.get("body").asString() + "!")
+				.put("status", 200)
+				.put("base64", false)
+				.put("headers", new JsonObject().put("X-Generated-By", "wasm-workers-server"))
+				.put("kv", new JsonObject());
 		System.out.println(response);
 	}
 

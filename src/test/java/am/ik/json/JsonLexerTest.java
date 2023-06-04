@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2023 Toshiaki Maki <makingx@gmail.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package am.ik.json;
 
 import org.junit.jupiter.api.Test;
@@ -72,11 +87,27 @@ class JsonLexerTest {
 	}
 
 	@Test
-	void nextToken_STRING_n() {
-		final JsonLexer lexer = new JsonLexer("\"\n\"");
+	void nextToken_STRING_linebreak() {
+		final JsonLexer lexer = new JsonLexer("\"\\n\"");
 		final Token token = lexer.nextToken();
 		assertThat(token.type()).isEqualTo(TokenType.STRING);
 		assertThat(token.value()).isEqualTo("\n");
+	}
+
+	@Test
+	void nextToken_STRING_tab() {
+		final JsonLexer lexer = new JsonLexer("\"\\t\"");
+		final Token token = lexer.nextToken();
+		assertThat(token.type()).isEqualTo(TokenType.STRING);
+		assertThat(token.value()).isEqualTo("\t");
+	}
+
+	@Test
+	void nextToken_STRING_mix() {
+		final JsonLexer lexer = new JsonLexer("\"hello\\njson\\tworld\"");
+		final Token token = lexer.nextToken();
+		assertThat(token.type()).isEqualTo(TokenType.STRING);
+		assertThat(token.value()).isEqualTo("hello\njson\tworld");
 	}
 
 	@Test

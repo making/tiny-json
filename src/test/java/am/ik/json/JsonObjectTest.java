@@ -15,37 +15,20 @@
  */
 package am.ik.json;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import org.junit.jupiter.api.Test;
 
-public class JsonArray {
-	private final List<JsonNode> values;
+import static org.assertj.core.api.Assertions.assertThat;
 
-	public JsonArray() {
-		this.values = new ArrayList<>();
-	}
+class JsonObjectTest {
 
-	public JsonArray add(JsonNode value) {
-		this.values.add(value);
-		return this;
-	}
-
-	public JsonNode get(int index) {
-		return this.values.get(index);
-	}
-
-	public int size() {
-		return this.values.size();
-	}
-
-	public List<JsonNode> values() {
-		return Collections.unmodifiableList(this.values);
-	}
-
-	@Override
-	public String toString() {
-		return Objects.toString(this.values);
+	@Test
+	void testToString() {
+		final JsonObject json = new JsonObject()
+				.put("data", "Hello World!")
+				.put("status", 200)
+				.put("base64", false)
+				.put("headers", new JsonObject().put("X-Generated-By", "wasm-workers-server"))
+				.put("kv", new JsonObject());
+		assertThat(json.toString()).isEqualTo("{\"data\":\"Hello World!\",\"status\":200,\"base64\":false,\"headers\":{\"X-Generated-By\":\"wasm-workers-server\"},\"kv\":{}}");
 	}
 }

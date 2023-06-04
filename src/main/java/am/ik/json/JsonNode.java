@@ -116,6 +116,41 @@ public class JsonNode {
 
 	@Override
 	public String toString() {
+		if (this.value == null) {
+			return "null";
+		}
+		if (isString()) {
+			return "\"" + stringify((String) this.value) + "\"";
+		}
 		return Objects.toString(this.value);
+	}
+
+	private static String stringify(String value) {
+		final StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < value.length(); i++) {
+			final char c = value.charAt(i);
+			switch (c) {
+				case '\f':
+					sb.append("\\f");
+					break;
+				case '\n':
+					sb.append("\\n");
+					break;
+				case '\r':
+					sb.append("\\r");
+					break;
+				case '\t':
+					sb.append("\\t");
+					break;
+				case '\\':
+				case '"':
+				case '/':
+					sb.append('\\').append(c);
+					break;
+				default:
+					sb.append(c);
+			}
+		}
+		return sb.toString();
 	}
 }

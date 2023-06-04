@@ -18,7 +18,7 @@ package am.ik.json;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Map.Entry;
 
 public class JsonObject {
 	private final Map<String, JsonNode> properties;
@@ -27,8 +27,39 @@ public class JsonObject {
 		this.properties = new LinkedHashMap<>();
 	}
 
-	public void put(String key, JsonNode value) {
+	public JsonObject put(String key, JsonNode value) {
 		this.properties.put(key, value);
+		return this;
+	}
+
+	public JsonObject put(String key, JsonArray value) {
+		this.properties.put(key, new JsonNode(value));
+		return this;
+	}
+
+	public JsonObject put(String key, JsonObject value) {
+		this.properties.put(key, new JsonNode(value));
+		return this;
+	}
+
+	public JsonObject put(String key, String value) {
+		this.properties.put(key, new JsonNode(value));
+		return this;
+	}
+
+	public JsonObject put(String key, int value) {
+		this.properties.put(key, new JsonNode(value));
+		return this;
+	}
+
+	public JsonObject put(String key, float value) {
+		this.properties.put(key, new JsonNode(value));
+		return this;
+	}
+
+	public JsonObject put(String key, boolean value) {
+		this.properties.put(key, new JsonNode(value));
+		return this;
 	}
 
 	public JsonNode get(String key) {
@@ -54,6 +85,19 @@ public class JsonObject {
 
 	@Override
 	public String toString() {
-		return Objects.toString(this.properties);
+		final StringBuilder sb = new StringBuilder();
+		sb.append("{");
+		final int size = this.properties.size();
+		int i = 0;
+		for (Entry<String, JsonNode> entry : this.properties.entrySet()) {
+			String k = entry.getKey();
+			JsonNode v = entry.getValue();
+			sb.append("\"").append(k).append("\"").append(":").append(v);
+			if (++i != size) {
+				sb.append(",");
+			}
+		}
+		sb.replace(sb.length(), sb.length(), "}");
+		return sb.toString();
 	}
 }
