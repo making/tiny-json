@@ -17,6 +17,7 @@ package com.example;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
 import am.ik.json.Json;
@@ -35,15 +36,16 @@ public class Main {
 	}
 
 	private static String copyToString(InputStream in) throws IOException {
-		byte[] buffer = new byte[256];
-		int offset = 0;
-		int count;
-		while ((count = in.read(buffer, offset, buffer.length - offset)) != -1) {
-			offset += count;
-			if (offset >= buffer.length) {
-				throw new IOException("buffer overflow");
-			}
+		if (in == null) {
+			return "";
 		}
-		return new String(buffer, 0, offset, StandardCharsets.UTF_8).trim();
+		final StringBuilder out = new StringBuilder();
+		final InputStreamReader reader = new InputStreamReader(in, StandardCharsets.UTF_8);
+		final char[] buffer = new char[256];
+		int charsRead;
+		while ((charsRead = reader.read(buffer)) != -1) {
+			out.append(buffer, 0, charsRead);
+		}
+		return out.toString();
 	}
 }
