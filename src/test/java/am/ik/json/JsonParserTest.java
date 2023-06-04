@@ -26,7 +26,7 @@ class JsonParserTest {
 		final JsonNode node = Json.parse("100");
 		assertThat(node.isInteger()).isTrue();
 		assertThat(node.asInteger()).isEqualTo(100);
-		assertThat(node.toString()).isEqualTo("100");
+		assertThat(Json.stringify(node)).isEqualTo("100");
 	}
 
 	@Test
@@ -34,7 +34,7 @@ class JsonParserTest {
 		final JsonNode node = Json.parse("10.2");
 		assertThat(node.isFloat()).isTrue();
 		assertThat(node.asFloat()).isEqualTo(10.2f);
-		assertThat(node.toString()).isEqualTo("10.2");
+		assertThat(Json.stringify(node)).isEqualTo("10.2");
 	}
 
 	@Test
@@ -42,7 +42,7 @@ class JsonParserTest {
 		final JsonNode node = Json.parse("true");
 		assertThat(node.isBoolean()).isTrue();
 		assertThat(node.asBoolean()).isEqualTo(true);
-		assertThat(node.toString()).isEqualTo("true");
+		assertThat(Json.stringify(node)).isEqualTo("true");
 	}
 
 	@Test
@@ -50,7 +50,7 @@ class JsonParserTest {
 		final JsonNode node = Json.parse("\"hello\"");
 		assertThat(node.isString()).isTrue();
 		assertThat(node.asString()).isEqualTo("hello");
-		assertThat(node.toString()).isEqualTo("\"hello\"");
+		assertThat(Json.stringify(node)).isEqualTo("\"hello\"");
 	}
 
 	@Test
@@ -58,7 +58,7 @@ class JsonParserTest {
 		final JsonNode node = Json.parse("\"\\\"hello\\\"\"");
 		assertThat(node.isString()).isTrue();
 		assertThat(node.asString()).isEqualTo("\"hello\"");
-		assertThat(node.toString()).isEqualTo("\"\\\"hello\\\"\"");
+		assertThat(Json.stringify(node)).isEqualTo("\"\\\"hello\\\"\"");
 	}
 
 	@Test
@@ -66,7 +66,7 @@ class JsonParserTest {
 		final JsonNode node = Json.parse("\"hello\\tworld\"");
 		assertThat(node.isString()).isTrue();
 		assertThat(node.asString()).isEqualTo("hello\tworld");
-		assertThat(node.toString()).isEqualTo("\"hello\\tworld\"");
+		assertThat(Json.stringify(node)).isEqualTo("\"hello\\tworld\"");
 	}
 
 	@Test
@@ -74,7 +74,7 @@ class JsonParserTest {
 		final JsonNode node = Json.parse("\"hello\\nworld\"");
 		assertThat(node.isString()).isTrue();
 		assertThat(node.asString()).isEqualTo("hello\nworld");
-		assertThat(node.toString()).isEqualTo("\"hello\\nworld\"");
+		assertThat(Json.stringify(node)).isEqualTo("\"hello\\nworld\"");
 	}
 
 	@Test
@@ -87,7 +87,7 @@ class JsonParserTest {
 		assertThat(array.get(0).asInteger()).isEqualTo(100);
 		assertThat(array.get(1).isString()).isTrue();
 		assertThat(array.get(1).asString()).isEqualTo("hello");
-		assertThat(node.toString()).isEqualTo("[100, \"hello\"]");
+		assertThat(Json.stringify(array)).isEqualTo("[100, \"hello\"]");
 	}
 
 	@Test
@@ -108,6 +108,6 @@ class JsonParserTest {
 		assertThat(json.get("body").asString()).isEqualTo("{\"foo\":\"bar\"}");
 		assertThat(json.get("params").asObject().isEmpty()).isTrue();
 		assertThat(json.get("kv").asObject().isEmpty()).isTrue();
-		assertThat(json.toString()).isEqualTo("{\"url\":\"\\/classes\",\"method\":\"POST\",\"headers\":{\"user-agent\":\"curl\\/7.88.1\",\"host\":\"127.0.0.1:8080\",\"content-length\":\"3\",\"accept\":\"*\\/*\",\"content-type\":\"application\\/x-www-form-urlencoded\"},\"body\":\"{\\\"foo\\\":\\\"bar\\\"}\",\"kv\":{},\"params\":{}}");
+		assertThat(Json.stringify(json)).isEqualTo("{\"url\":\"\\/classes\",\"method\":\"POST\",\"headers\":{\"user-agent\":\"curl\\/7.88.1\",\"host\":\"127.0.0.1:8080\",\"content-length\":\"3\",\"accept\":\"*\\/*\",\"content-type\":\"application\\/x-www-form-urlencoded\"},\"body\":\"{\\\"foo\\\":\\\"bar\\\"}\",\"kv\":{},\"params\":{}}");
 	}
 }

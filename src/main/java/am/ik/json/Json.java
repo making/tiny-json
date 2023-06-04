@@ -19,4 +19,16 @@ public final class Json {
 	public static JsonNode parse(String json) {
 		return new JsonParser(new JsonLexer(json)).parse();
 	}
+
+	public static String stringify(JsonNode json) {
+		return json == null ? "null" : json.toString();
+	}
+
+	public static String stringify(JsonArray json) {
+		return json == null ? "null" : json.toString();
+	}
+
+	public static String stringify(JsonObject json) {
+		return json == null ? "null" : json.toString();
+	}
 }

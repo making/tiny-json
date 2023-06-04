@@ -31,7 +31,7 @@ public class Main {
 				.put("base64", false)
 				.put("headers", new JsonObject().put("X-Generated-By", "wasm-workers-server"))
 				.put("kv", new JsonObject());
-		System.out.println(response);
+		System.out.println(Json.stringify(response));
 	}
 
 	private static String copyToString(InputStream in) throws IOException {
