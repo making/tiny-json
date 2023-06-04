@@ -48,7 +48,13 @@ jobs:
         gpg-private-key: ${{ steps.secrets.outputs.GPG_SECRING }}
         gpg-passphrase: ${{ steps.secrets.outputs.GPG_PASSPHRASE }}
     - name: Unit Tests
-      run: ./mvnw -V --no-transfer-progress clean test
+      run: ./mvnw -V --no-transfer-progress clean install
+    - name: Set up wasmtime
+      run: curl https://wasmtime.dev/install.sh -sSf | bash
+    - name: Integration Tests
+      run: |
+        export PATH=${HOME}/.wasmtime/bin:${PATH}
+        ./integration-tests/hello-wasm/run.sh
     - name: Deploy to sonatype-snapshots
       if: github.ref == 'refs/heads/develop'
       run: |
