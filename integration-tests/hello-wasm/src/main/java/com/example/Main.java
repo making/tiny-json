@@ -24,7 +24,7 @@ import am.ik.json.JsonObject;
 
 public class Main {
 	public static void main(String[] args) throws Exception {
-		final JsonObject request = Json.parse(readString(System.in)).asObject();
+		final JsonObject request = Json.parse(copyToString(System.in)).asObject();
 		final JsonObject response = new JsonObject()
 				.put("data", "Hello " + request.get("body").asString() + "!")
 				.put("status", 200)
@@ -34,7 +34,7 @@ public class Main {
 		System.out.println(response);
 	}
 
-	private static String readString(InputStream in) throws IOException {
+	private static String copyToString(InputStream in) throws IOException {
 		byte[] buffer = new byte[256];
 		int offset = 0;
 		int count;
