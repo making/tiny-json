@@ -87,6 +87,10 @@ public class JsonObject {
 		return Collections.unmodifiableMap(this.properties);
 	}
 
+	public JsonNode toNode() {
+		return new JsonNode(this);
+	}
+
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();

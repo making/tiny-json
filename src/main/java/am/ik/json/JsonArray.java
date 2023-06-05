@@ -44,6 +44,10 @@ public class JsonArray {
 		return Collections.unmodifiableList(this.values);
 	}
 
+	public JsonNode toNode() {
+		return new JsonNode(this);
+	}
+
 	@Override
 	public String toString() {
 		return Objects.toString(this.values);
