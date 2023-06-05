@@ -6,7 +6,7 @@ World's Smallest JSON Parser in Java
 <depdency>
 	<groupId>am.ik.json</groupId>
 	<artifactId>tiny-json</artifactId>
-	<version>0.1.1</version>
+	<version>0.1.2</version>
 </depdency>
 ```
 
