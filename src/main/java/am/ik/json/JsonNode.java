@@ -65,14 +65,20 @@ public class JsonNode {
 		return this.value instanceof JsonObject;
 	}
 
-	public boolean asBoolean() {
+	public Boolean asBoolean() {
+		if (this.value == null) {
+			return null;
+		}
 		if (isBoolean()) {
-			return (boolean) this.value;
+			return (Boolean) this.value;
 		}
 		throw new IllegalStateException("Value is not a boolean");
 	}
 
 	public String asString() {
+		if (this.value == null) {
+			return null;
+		}
 		if (isString()) {
 			return (String) this.value;
 		}
@@ -80,6 +86,9 @@ public class JsonNode {
 	}
 
 	public Number asNumber() {
+		if (this.value == null) {
+			return null;
+		}
 		if (isNumber()) {
 			return (Number) this.value;
 		}
@@ -87,6 +96,9 @@ public class JsonNode {
 	}
 
 	public Integer asInteger() {
+		if (this.value == null) {
+			return null;
+		}
 		if (isInteger()) {
 			return (Integer) this.value;
 		}
@@ -94,6 +106,9 @@ public class JsonNode {
 	}
 
 	public Float asFloat() {
+		if (this.value == null) {
+			return null;
+		}
 		if (isFloat()) {
 			return (Float) this.value;
 		}
@@ -101,6 +116,9 @@ public class JsonNode {
 	}
 
 	public JsonArray asArray() {
+		if (this.value == null) {
+			return null;
+		}
 		if (isArray()) {
 			return (JsonArray) this.value;
 		}
@@ -108,6 +126,9 @@ public class JsonNode {
 	}
 
 	public JsonObject asObject() {
+		if (this.value == null) {
+			return null;
+		}
 		if (isObject()) {
 			return (JsonObject) this.value;
 		}
