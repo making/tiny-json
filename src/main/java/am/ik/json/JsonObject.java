@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 public class JsonObject {
 	private final Map<String, JsonNode> properties;
@@ -74,6 +75,10 @@ public class JsonObject {
 		return this.properties.containsKey(key);
 	}
 
+
+	public Set<String> keySet() {
+		return this.properties.keySet();
+	}
 
 	public int size() {
 		return this.properties.size();
