@@ -63,7 +63,11 @@ public class JsonObject {
 	}
 
 	public JsonNode get(String key) {
-		return this.properties.get(key);
+		final JsonNode value = this.properties.get(key);
+		if (value == null) {
+			return new JsonNode(null);
+		}
+		return value;
 	}
 
 	public boolean containsKey(String key) {

@@ -31,4 +31,12 @@ class JsonObjectTest {
 				.put("kv", new JsonObject());
 		assertThat(json.toString()).isEqualTo("{\"data\":\"Hello World!\",\"status\":200,\"base64\":false,\"headers\":{\"X-Generated-By\":\"wasm-workers-server\"},\"kv\":{}}");
 	}
+
+	@Test
+	void nullSafe() {
+		final JsonObject json = new JsonObject();
+		final JsonNode foo = json.get("foo");
+		assertThat(foo).isNotNull();
+		assertThat(foo.isNull()).isTrue();
+	}
 }
