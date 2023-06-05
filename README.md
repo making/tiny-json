@@ -1,6 +1,6 @@
 # tiny json
 
-World's Smallest JSON Parser in Java
+a tiny json parser that works with [teavm-wasi](https://github.com/fermyon/teavm-wasi)
 
 ```xml
 <depdency>
