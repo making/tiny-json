@@ -25,12 +25,12 @@
 		</license>
 	</licenses>
 	<scm>
-		<url>https://github.com/making/java-lib</url>
-		<connection>scm:git:git@github.com:making/java-lib.git</connection>
-		<developerConnection>scm:git:git@github.com:making/java-lib.git
+		<url>https://github.com/making/tiy-json</url>
+		<connection>scm:git:git@github.com:making/tiy-json.git</connection>
+		<developerConnection>scm:git:git@github.com:making/tiy-json.git
 		</developerConnection>
 	</scm>
-	<url>https://github.com/making/java-lib</url>
+	<url>https://github.com/making/tiy-json</url>
 
 	<developers>
 		<developer>
