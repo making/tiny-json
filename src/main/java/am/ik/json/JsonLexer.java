@@ -81,16 +81,40 @@ public class JsonLexer implements Iterator<Token>, Iterable<Token> {
 				}
 				switch (next) {
 					case '"', '\\', '/' -> sb.append(next);
+					case 'b' -> sb.append('\b');
 					case 'f' -> sb.append('\f');
 					case 'n' -> sb.append('\n');
 					case 'r' -> sb.append('\r');
 					case 't' -> sb.append('\t');
+					case 'u' -> sb.append(unicodeEscape());
 					default -> sb.append('\\').append(next);
 				}
 			}
 			current = consume();
 		}
 		throw new JsonLexerException("Unterminated string: " + sb);
+	}
+
+	/**
+	 * The character of a {@code u} escape, its four hexadecimal digits read. A character
+	 * outside the Basic Multilingual Plane is two such escapes, a surrogate pair, each
+	 * read as the {@code char} it is.
+	 */
+	private char unicodeEscape() {
+		if (this.position + 4 > this.input.length()) {
+			throw new JsonLexerException("Invalid unicode escape: " + this.input.substring(this.position));
+		}
+		int code = 0;
+		for (int i = 0; i < 4; i++) {
+			final int digit = Character.digit(this.input.charAt(this.position + i), 16);
+			if (digit < 0) {
+				throw new JsonLexerException(
+						"Invalid unicode escape: " + this.input.substring(this.position, this.position + 4));
+			}
+			code = code * 16 + digit;
+		}
+		this.position += 4;
+		return (char) code;
 	}
 
 	private Token numberToken(char c) {
@@ -105,8 +129,19 @@ public class JsonLexer implements Iterator<Token>, Iterable<Token> {
 				break;
 			}
 		}
+		boolean exponent = false;
+		if (!isEof() && (this.input.charAt(this.position) == 'e' || this.input.charAt(this.position) == 'E')) {
+			exponent = true;
+			sb.append(this.input.charAt(this.position++));
+			if (!isEof() && (this.input.charAt(this.position) == '+' || this.input.charAt(this.position) == '-')) {
+				sb.append(this.input.charAt(this.position++));
+			}
+			while (!isEof() && Character.isDigit(this.input.charAt(this.position))) {
+				sb.append(this.input.charAt(this.position++));
+			}
+		}
 		final String number = sb.toString();
-		if (number.contains(".")) {
+		if (exponent || number.contains(".")) {
 			return new Token(TokenType.FLOAT, number);
 		}
 		return new Token(TokenType.INT, number);

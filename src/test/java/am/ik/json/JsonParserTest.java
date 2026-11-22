@@ -29,6 +29,13 @@ class JsonParserTest {
 	}
 
 	@Test
+	void parseFloatWithExponent() {
+		final JsonArray array = Objects.requireNonNull(Json.parse("[1.50e3, -5E-1, 2e+2]").asArray());
+		assertThat(array.values()).allMatch(JsonNode::isFloat);
+		assertThat(Json.stringify(array)).isEqualTo("[1500.0,-0.5,200.0]");
+	}
+
+	@Test
 	void parseBoolean() {
 		final JsonNode node = Json.parse("true");
 		assertThat(node.isBoolean()).isTrue();
@@ -66,6 +73,20 @@ class JsonParserTest {
 		assertThat(node.isString()).isTrue();
 		assertThat(node.asString()).isEqualTo("hello\nworld");
 		assertThat(Json.stringify(node)).isEqualTo("\"hello\\nworld\"");
+	}
+
+	@Test
+	void parseStringEscapes() {
+		final JsonNode node = Json.parse("\"\\u00e9\\u00C9 \\ud83d\\ude00 \\b\\f\"");
+		assertThat(node.asString()).isEqualTo("\u00e9\u00c9 \ud83d\ude00 \b\f");
+		assertThat(Json.stringify(node)).isEqualTo("\"\u00e9\u00c9 \ud83d\ude00 \\b\\f\"");
+	}
+
+	@Test
+	void stringifyControlCharacters() {
+		final JsonNode node = new JsonNode("\u0000\u0001\u001f\b\t\u007f");
+		assertThat(Json.stringify(node)).isEqualTo("\"\\u0000\\u0001\\u001f\\b\\t\u007f\"");
+		assertThat(Json.parse(Json.stringify(node)).asString()).isEqualTo(node.asString());
 	}
 
 	@Test

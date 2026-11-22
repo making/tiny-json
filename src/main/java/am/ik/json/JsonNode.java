@@ -133,15 +133,22 @@ public class JsonNode {
 		for (int i = 0; i < value.length(); i++) {
 			final char c = value.charAt(i);
 			sb.append(switch (c) {
+				case '\b' -> "\\b";
 				case '\f' -> "\\f";
 				case '\n' -> "\\n";
 				case '\r' -> "\\r";
 				case '\t' -> "\\t";
 				case '\\', '"', '/' -> "\\" + c;
-				default -> String.valueOf(c);
+				default -> (c < 0x20) ? controlEscape(c) : String.valueOf(c);
 			});
 		}
 		return sb.toString();
+	}
+
+	/** A control character with no escape of its own, as a {@code u} escape. */
+	private static String controlEscape(char c) {
+		final String hex = Integer.toHexString(c);
+		return "\\u" + "0000".substring(hex.length()) + hex;
 	}
 
 }
