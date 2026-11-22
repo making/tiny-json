@@ -46,7 +46,7 @@ public class JsonLexer implements Iterator<Token>, Iterable<Token> {
 				if (isDigit(current) || current == '-') {
 					yield numberToken(current);
 				}
-				if (Character.isLetter(current)) {
+				if (isLowerCaseLetter(current)) {
 					yield literalToken(current);
 				}
 				throw new JsonLexerException("Invalid Character: " + current);
@@ -110,7 +110,7 @@ public class JsonLexer implements Iterator<Token>, Iterable<Token> {
 		}
 		int code = 0;
 		for (int i = 0; i < 4; i++) {
-			final int digit = Character.digit(this.input.charAt(this.position + i), 16);
+			final int digit = hexDigit(this.input.charAt(this.position + i));
 			if (digit < 0) {
 				throw new JsonLexerException(
 						"Invalid unicode escape: " + this.input.substring(this.position, this.position + 4));
@@ -172,12 +172,31 @@ public class JsonLexer implements Iterator<Token>, Iterable<Token> {
 		return c >= '0' && c <= '9';
 	}
 
+	// The letters of true, false and null. The tests here are of ASCII alone, so a
+	// program compiled from this source holds no table of Unicode's characters.
+	private static boolean isLowerCaseLetter(char c) {
+		return c >= 'a' && c <= 'z';
+	}
+
+	private static int hexDigit(char c) {
+		if (c >= '0' && c <= '9') {
+			return c - '0';
+		}
+		if (c >= 'a' && c <= 'f') {
+			return c - 'a' + 10;
+		}
+		if (c >= 'A' && c <= 'F') {
+			return c - 'A' + 10;
+		}
+		return -1;
+	}
+
 	private Token literalToken(char c) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(c);
 		while (!isEof()) {
 			final char current = this.input.charAt(this.position);
-			if (Character.isLetter(current)) {
+			if (isLowerCaseLetter(current)) {
 				sb.append(this.input.charAt(this.position++));
 			}
 			else {
