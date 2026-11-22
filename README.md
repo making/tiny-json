@@ -18,6 +18,20 @@ json.get("foo").asString(); // bar
 Json.stringify(json); // {"foo":"bar"}
 ```
 
+For an indented document, pass a `JsonWriter`:
+
+```java
+JsonObject post = new JsonObject().put("method", "POST").put("path", "/post");
+Json.stringify(post, JsonWriter.pretty(2));
+// {
+//   "method": "POST",
+//   "path": "/post"
+// }
+```
+
+`JsonWriter.pretty(2).inlineArrays()` writes arrays on one line (`[1, 2]`) instead of
+one element a line, which suits request and response dumps.
+
 The API is null-marked with [JSpecify](https://jspecify.dev): accessors such as
 `asString()` return `@Nullable String`, and the build enforces it with NullAway.
 

@@ -36,7 +36,16 @@ mkdir -p "$DIR/target"
 run_rontolisp "$DIR/src/main/java/com/example/Main.java" --java-source-path "$ROOT/src/main/java" -o "$OUTPUT"
 
 RESPONSE=$(echo '{"body":"WASM"}' | wasmtime "$OUTPUT")
-EXPECTED='{"data":"Hello WASM!","status":200,"base64":false,"headers":{"X-Generated-By":"wasm-workers-server"},"kv":{}}'
+EXPECTED='{
+  "data": "Hello WASM!",
+  "status": 200,
+  "base64": false,
+  "headers": {
+    "X-Generated-By": "wasm-workers-server"
+  },
+  "kv": {},
+  "tags": ["wasm", "json"]
+}'
 if [ "$RESPONSE" = "$EXPECTED" ]; then
 	echo "SUCCESS: $RESPONSE"
 	exit 0

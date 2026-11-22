@@ -18,5 +18,14 @@ the subset of Java that the front end compiles and that it works without a JDK.
 
 ```bash
 $ echo '{"body":"WASM"}' | wasmtime target/main.wasm
-{"data":"Hello WASM!","status":200,"base64":false,"headers":{"X-Generated-By":"wasm-workers-server"},"kv":{}}
+{
+  "data": "Hello WASM!",
+  "status": 200,
+  "base64": false,
+  "headers": {
+    "X-Generated-By": "wasm-workers-server"
+  },
+  "kv": {},
+  "tags": ["wasm", "json"]
+}
 ```

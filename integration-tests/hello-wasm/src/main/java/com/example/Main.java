@@ -10,7 +10,10 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
 import am.ik.json.Json;
+import am.ik.json.JsonArray;
+import am.ik.json.JsonNode;
 import am.ik.json.JsonObject;
+import am.ik.json.JsonWriter;
 
 public class Main {
 	public static void main(String[] args) throws Exception {
@@ -20,8 +23,9 @@ public class Main {
 				.put("status", 200)
 				.put("base64", false)
 				.put("headers", new JsonObject().put("X-Generated-By", "wasm-workers-server"))
-				.put("kv", new JsonObject());
-		System.out.println(Json.stringify(response));
+				.put("kv", new JsonObject())
+				.put("tags", new JsonArray().add(new JsonNode("wasm")).add(new JsonNode("json")));
+		System.out.println(Json.stringify(response, JsonWriter.pretty(2).inlineArrays()));
 	}
 
 	private static String copyToString(InputStream in) throws IOException {

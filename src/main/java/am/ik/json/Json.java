@@ -30,4 +30,16 @@ public final class Json {
 		return json == null ? "null" : json.toString();
 	}
 
+	public static String stringify(@Nullable JsonNode json, JsonWriter writer) {
+		return json == null ? "null" : writer.write(json);
+	}
+
+	public static String stringify(@Nullable JsonArray json, JsonWriter writer) {
+		return json == null ? "null" : writer.write(json.toNode());
+	}
+
+	public static String stringify(@Nullable JsonObject json, JsonWriter writer) {
+		return json == null ? "null" : writer.write(json.toNode());
+	}
+
 }
