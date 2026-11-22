@@ -4,6 +4,9 @@
  */
 package am.ik.json;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
 public class JsonParser {
 
 	private final JsonLexer lexer;
@@ -60,8 +63,8 @@ public class JsonParser {
 			case LEFT_BRACE -> new JsonNode(parseObject());
 			case LEFT_BRACKET -> new JsonNode(parseArray());
 			case STRING -> new JsonNode(consumeToken(TokenType.STRING).value());
-			case INT -> new JsonNode(Integer.parseInt(consumeToken(TokenType.INT).value()));
-			case FLOAT -> new JsonNode(Float.parseFloat(consumeToken(TokenType.FLOAT).value()));
+			case INT -> new JsonNode(integer(consumeToken(TokenType.INT).value()));
+			case FLOAT -> new JsonNode(decimal(consumeToken(TokenType.FLOAT).value()));
 			case BOOLEAN -> new JsonNode("true".equals(consumeToken(TokenType.BOOLEAN).value()));
 			case NULL -> {
 				consumeToken(TokenType.NULL);
@@ -69,6 +72,34 @@ public class JsonParser {
 			}
 			default -> throw new JsonParseException("Unexpected token: " + this.currentToken.type());
 		};
+	}
+
+	/**
+	 * An integer as the smallest of {@code Integer}, {@code Long} and {@code BigInteger}.
+	 */
+	private static Number integer(String text) {
+		final int digits = (text.charAt(0) == '-') ? text.length() - 1 : text.length();
+		if (digits < 10) {
+			return Integer.parseInt(text);
+		}
+		final BigInteger value = new BigInteger(text);
+		if (value.bitLength() < 32) {
+			return value.intValue();
+		}
+		if (value.bitLength() < 64) {
+			return value.longValue();
+		}
+		return value;
+	}
+
+	/** A number with a fraction or an exponent, with the digits it is written with. */
+	private static BigDecimal decimal(String text) {
+		try {
+			return new BigDecimal(text);
+		}
+		catch (NumberFormatException ex) {
+			throw new JsonParseException("Number out of range: " + text);
+		}
 	}
 
 	/** Whether a comma is next, consumed: another member or element follows it. */

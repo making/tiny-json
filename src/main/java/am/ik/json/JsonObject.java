@@ -4,6 +4,7 @@
  */
 package am.ik.json;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -35,7 +36,11 @@ public class JsonObject {
 		return put(key, new JsonNode(value));
 	}
 
-	public JsonObject put(String key, float value) {
+	public JsonObject put(String key, long value) {
+		return put(key, new JsonNode(value));
+	}
+
+	public JsonObject put(String key, BigDecimal value) {
 		return put(key, new JsonNode(value));
 	}
 

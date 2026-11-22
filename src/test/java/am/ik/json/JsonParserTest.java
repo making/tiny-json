@@ -4,6 +4,8 @@
  */
 package am.ik.json;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
@@ -24,18 +26,31 @@ class JsonParserTest {
 	}
 
 	@Test
-	void parseFloat() {
-		final JsonNode node = Json.parse("10.2");
-		assertThat(node.isFloat()).isTrue();
-		assertThat(node.asFloat()).isEqualTo(10.2f);
-		assertThat(Json.stringify(node)).isEqualTo("10.2");
+	void parseIntegerAsTheSmallestTypeThatHoldsIt() {
+		final String text = "[2147483647,-2147483648,2147483648,9223372036854775807,-9223372036854775809]";
+		final JsonArray array = Objects.requireNonNull(Json.parse(text).asArray());
+		assertThat(array.values()).extracting(JsonNode::value)
+			.containsExactly(Integer.MAX_VALUE, Integer.MIN_VALUE, 2147483648L, Long.MAX_VALUE,
+					new BigInteger("-9223372036854775809"));
+		assertThat(array.get(2).asLong()).isEqualTo(2147483648L);
+		assertThat(array.get(4).isBigInteger()).isTrue();
+		assertThat(array.values()).allMatch(JsonNode::isNumber);
+		assertThat(Json.stringify(array)).isEqualTo(text);
 	}
 
 	@Test
-	void parseFloatWithExponent() {
+	void parseDecimal() {
+		final JsonNode node = Json.parse("0.12345678901234567890");
+		assertThat(node.isDecimal()).isTrue();
+		assertThat(node.asDecimal()).isEqualTo(new BigDecimal("0.12345678901234567890"));
+		assertThat(Json.stringify(node)).isEqualTo("0.12345678901234567890");
+	}
+
+	@Test
+	void parseDecimalWithExponent() {
 		final JsonArray array = Objects.requireNonNull(Json.parse("[1.50e3, -5E-1, 2e+2]").asArray());
-		assertThat(array.values()).allMatch(JsonNode::isFloat);
-		assertThat(Json.stringify(array)).isEqualTo("[1500.0,-0.5,200.0]");
+		assertThat(array.values()).allMatch(JsonNode::isDecimal);
+		assertThat(Json.stringify(array)).isEqualTo("[1.50E+3,-0.5,2E+2]");
 	}
 
 	@Test
@@ -132,7 +147,7 @@ class JsonParserTest {
 
 	@ParameterizedTest
 	@ValueSource(strings = { "", "[1 2]", "[1,]", "[,1]", "{\"a\":1,}", "{\"a\":1 \"b\":2}", "{} x", "1 2", "01", "-",
-			"1.", ".5", "1e", "1.5e+", "+1", "\"\t\"", "\"\\x\"", "\"\\u12\"", "\u000b1", "\u0661" })
+			"1e9999999999", "1.", ".5", "1e", "1.5e+", "+1", "\"\t\"", "\"\\x\"", "\"\\u12\"", "\u000b1", "\u0661" })
 	void refuseWhatIsNoJson(String text) {
 		assertThatThrownBy(() -> Json.parse(text)).isInstanceOfAny(JsonParseException.class, JsonLexerException.class);
 	}

@@ -4,12 +4,18 @@
  */
 package am.ik.json;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
 
 /**
  * A JSON value. The accessors return {@code null} when the value is JSON {@code null}.
+ * <p>
+ * A number is parsed without losing a digit: an integer as the smallest of
+ * {@code Integer}, {@code Long} and {@code BigInteger} that holds it, a number with a
+ * fraction or an exponent as a {@code BigDecimal}.
  */
 public class JsonNode {
 
@@ -44,15 +50,23 @@ public class JsonNode {
 	}
 
 	public boolean isNumber() {
-		return this.value instanceof Integer || this.value instanceof Float;
+		return this.value instanceof Number;
 	}
 
 	public boolean isInteger() {
 		return this.value instanceof Integer;
 	}
 
-	public boolean isFloat() {
-		return this.value instanceof Float;
+	public boolean isLong() {
+		return this.value instanceof Long;
+	}
+
+	public boolean isBigInteger() {
+		return this.value instanceof BigInteger;
+	}
+
+	public boolean isDecimal() {
+		return this.value instanceof BigDecimal;
 	}
 
 	public boolean isArray() {
@@ -91,11 +105,25 @@ public class JsonNode {
 		return nullOr("integer");
 	}
 
-	public @Nullable Float asFloat() {
-		if (this.value instanceof Float floatValue) {
-			return floatValue;
+	public @Nullable Long asLong() {
+		if (this.value instanceof Long longValue) {
+			return longValue;
 		}
-		return nullOr("float");
+		return nullOr("long");
+	}
+
+	public @Nullable BigInteger asBigInteger() {
+		if (this.value instanceof BigInteger bigIntegerValue) {
+			return bigIntegerValue;
+		}
+		return nullOr("big integer");
+	}
+
+	public @Nullable BigDecimal asDecimal() {
+		if (this.value instanceof BigDecimal decimalValue) {
+			return decimalValue;
+		}
+		return nullOr("decimal");
 	}
 
 	public @Nullable JsonArray asArray() {
