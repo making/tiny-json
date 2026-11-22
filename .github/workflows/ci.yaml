@@ -104,7 +104,7 @@ jobs:
         distribution: 'liberica'
         cache: maven
         gpg-private-key: ${{ steps.secrets.outputs.GPG_SECRING }}
-        gpg-passphrase: ${{ steps.secrets.outputs.GPG_PASSPHRASE }}
+        gpg-passphrase-env-var: GPG_PASSPHRASE
     - name: Generates Maven Settings
       uses: s4u/maven-settings-action@v4.1.0
       with:
@@ -114,15 +114,12 @@ jobs:
               "username": "${{ steps.secrets.outputs.MAVEN_CENTRAL_USERNAME }}",
               "password": "${{ steps.secrets.outputs.MAVEN_CENTRAL_PASSWORD }}"
           }]
-    # The pom attaches the sources and the javadoc; the plugin publishes a snapshot
-    # from develop and a release from main.
+    # The pom attaches the sources and the javadoc and signs them in the same
+    # lifecycle; the plugin publishes a snapshot from develop and a release from main.
     - name: Deploy to Maven Central
       run: |
         set -e
-        ./mvnw -V \
-            package \
-            org.apache.maven.plugins:maven-gpg-plugin:3.0.1:sign \
-            deploy \
+        ./mvnw -V -Psign deploy \
             --no-transfer-progress \
             -Dgpg.passphrase=${GPG_PASSPHRASE} \
             -DskipTests=true
