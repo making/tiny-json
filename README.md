@@ -8,7 +8,7 @@ so the same code runs on a JDK and as WebAssembly without one.
 <dependency>
 	<groupId>am.ik.json</groupId>
 	<artifactId>tiny-json</artifactId>
-	<version>0.3.0</version>
+	<version>0.4.0</version>
 </dependency>
 ```
 
