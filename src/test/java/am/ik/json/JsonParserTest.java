@@ -80,9 +80,10 @@ class JsonParserTest {
 
 	@Test
 	void parseStringEscapes() {
-		final JsonNode node = Json.parse("\"\\u00e9\\u00C9 \\ud83d\\ude00 \\b\\f\"");
-		assertThat(node.asString()).isEqualTo("\u00e9\u00c9 \ud83d\ude00 \b\f");
-		assertThat(Json.stringify(node)).isEqualTo("\"\u00e9\u00c9 \ud83d\ude00 \\b\\f\"");
+		final JsonNode node = Json.parse("\"\\u00e9\\u00C9 \\ud83d\\ude00 \\b\\f \\/a\"");
+		assertThat(node.asString()).isEqualTo("\u00e9\u00c9 \ud83d\ude00 \b\f /a");
+		// The reader accepts "\/", the writer writes "/" as it is.
+		assertThat(Json.stringify(node)).isEqualTo("\"\u00e9\u00c9 \ud83d\ude00 \\b\\f /a\"");
 	}
 
 	@Test
@@ -126,7 +127,7 @@ class JsonParserTest {
 		assertThat(Objects.requireNonNull(json.get("params").asObject()).isEmpty()).isTrue();
 		assertThat(Objects.requireNonNull(json.get("kv").asObject()).isEmpty()).isTrue();
 		assertThat(Json.stringify(json)).isEqualTo(
-				"{\"url\":\"\\/classes\",\"method\":\"POST\",\"headers\":{\"user-agent\":\"curl\\/7.88.1\",\"host\":\"127.0.0.1:8080\",\"content-length\":\"3\",\"accept\":\"*\\/*\",\"content-type\":\"application\\/x-www-form-urlencoded\"},\"body\":\"{\\\"foo\\\":\\\"bar\\\"}\",\"kv\":{},\"params\":{}}");
+				"{\"url\":\"/classes\",\"method\":\"POST\",\"headers\":{\"user-agent\":\"curl/7.88.1\",\"host\":\"127.0.0.1:8080\",\"content-length\":\"3\",\"accept\":\"*/*\",\"content-type\":\"application/x-www-form-urlencoded\"},\"body\":\"{\\\"foo\\\":\\\"bar\\\"}\",\"kv\":{},\"params\":{}}");
 	}
 
 	@ParameterizedTest

@@ -138,7 +138,7 @@ public class JsonNode {
 				case '\n' -> "\\n";
 				case '\r' -> "\\r";
 				case '\t' -> "\\t";
-				case '\\', '"', '/' -> "\\" + c;
+				case '\\', '"' -> "\\" + c;
 				default -> (c < 0x20) ? controlEscape(c) : String.valueOf(c);
 			});
 		}
