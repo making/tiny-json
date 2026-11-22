@@ -116,11 +116,17 @@ jobs:
           }]
     # The pom attaches the sources and the javadoc and signs them in the same
     # lifecycle; the plugin publishes a snapshot from develop and a release from main.
+    #
+    # Maven 3.10 scopes the 'central' server credentials to their declared origin
+    # (repo.maven.apache.org), so the snapshot deploy to central.sonatype.com goes out
+    # unauthenticated. credentialScope=id restores the id-only matching this repository
+    # needs.
     - name: Deploy to Maven Central
       run: |
         set -e
         ./mvnw -V -Psign deploy \
             --no-transfer-progress \
+            -Dmaven.repository.credentialScope=id \
             -Dgpg.passphrase=${GPG_PASSPHRASE} \
             -DskipTests=true
     - name: Revoke token
