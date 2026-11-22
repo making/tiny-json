@@ -7,8 +7,11 @@ package am.ik.json;
 import java.util.Objects;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JsonParserTest {
 
@@ -124,6 +127,13 @@ class JsonParserTest {
 		assertThat(Objects.requireNonNull(json.get("kv").asObject()).isEmpty()).isTrue();
 		assertThat(Json.stringify(json)).isEqualTo(
 				"{\"url\":\"\\/classes\",\"method\":\"POST\",\"headers\":{\"user-agent\":\"curl\\/7.88.1\",\"host\":\"127.0.0.1:8080\",\"content-length\":\"3\",\"accept\":\"*\\/*\",\"content-type\":\"application\\/x-www-form-urlencoded\"},\"body\":\"{\\\"foo\\\":\\\"bar\\\"}\",\"kv\":{},\"params\":{}}");
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = { "", "[1 2]", "[1,]", "[,1]", "{\"a\":1,}", "{\"a\":1 \"b\":2}", "{} x", "1 2", "01", "-",
+			"1.", ".5", "1e", "1.5e+", "+1", "\"\t\"", "\"\\x\"", "\"\\u12\"", "\u000b1", "\u0661" })
+	void refuseWhatIsNoJson(String text) {
+		assertThatThrownBy(() -> Json.parse(text)).isInstanceOfAny(JsonParseException.class, JsonLexerException.class);
 	}
 
 	@Test

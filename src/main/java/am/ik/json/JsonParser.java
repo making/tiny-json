@@ -15,20 +15,28 @@ public class JsonParser {
 		this.currentToken = lexer.nextToken();
 	}
 
+	/**
+	 * Parses the one value of the input: anything but whitespace after it is refused.
+	 * @return the value
+	 */
 	public JsonNode parse() {
-		return parseValue();
+		final JsonNode value = parseValue();
+		if (this.currentToken.type() != TokenType.EOF) {
+			throw new JsonParseException("Unexpected token after the value: " + this.currentToken.type());
+		}
+		return value;
 	}
 
 	private JsonObject parseObject() {
 		final JsonObject jsonObject = new JsonObject();
 		consumeToken(TokenType.LEFT_BRACE);
-		while (this.currentToken.type() != TokenType.RIGHT_BRACE) {
-			final String key = consumeToken(TokenType.STRING).value();
-			consumeToken(TokenType.COLON);
-			jsonObject.put(key, parseValue());
-			if (this.currentToken.type() == TokenType.COMMA) {
-				consumeToken(TokenType.COMMA);
+		if (this.currentToken.type() != TokenType.RIGHT_BRACE) {
+			do {
+				final String key = consumeToken(TokenType.STRING).value();
+				consumeToken(TokenType.COLON);
+				jsonObject.put(key, parseValue());
 			}
+			while (consumeComma());
 		}
 		consumeToken(TokenType.RIGHT_BRACE);
 		return jsonObject;
@@ -37,11 +45,11 @@ public class JsonParser {
 	private JsonArray parseArray() {
 		final JsonArray jsonArray = new JsonArray();
 		consumeToken(TokenType.LEFT_BRACKET);
-		while (this.currentToken.type() != TokenType.RIGHT_BRACKET) {
-			jsonArray.add(parseValue());
-			if (this.currentToken.type() == TokenType.COMMA) {
-				consumeToken(TokenType.COMMA);
+		if (this.currentToken.type() != TokenType.RIGHT_BRACKET) {
+			do {
+				jsonArray.add(parseValue());
 			}
+			while (consumeComma());
 		}
 		consumeToken(TokenType.RIGHT_BRACKET);
 		return jsonArray;
@@ -61,6 +69,15 @@ public class JsonParser {
 			}
 			default -> throw new JsonParseException("Unexpected token: " + this.currentToken.type());
 		};
+	}
+
+	/** Whether a comma is next, consumed: another member or element follows it. */
+	private boolean consumeComma() {
+		if (this.currentToken.type() != TokenType.COMMA) {
+			return false;
+		}
+		consumeToken(TokenType.COMMA);
+		return true;
 	}
 
 	private Token consumeToken(TokenType expectedType) {

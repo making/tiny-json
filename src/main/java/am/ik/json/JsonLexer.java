@@ -28,7 +28,8 @@ public class JsonLexer implements Iterator<Token>, Iterable<Token> {
 			if (next == null) {
 				return new Token(TokenType.EOF, "");
 			}
-			if (!Character.isWhitespace(next)) {
+			// the four characters RFC 8259 counts as whitespace
+			if (next != ' ' && next != '\t' && next != '\n' && next != '\r') {
 				current = next;
 				break;
 			}
@@ -42,7 +43,7 @@ public class JsonLexer implements Iterator<Token>, Iterable<Token> {
 			case ',' -> new Token(TokenType.COMMA, ",");
 			case '"' -> stringToken();
 			default -> {
-				if (Character.isDigit(current) || current == '-') {
+				if (isDigit(current) || current == '-') {
 					yield numberToken(current);
 				}
 				if (Character.isLetter(current)) {
@@ -71,6 +72,9 @@ public class JsonLexer implements Iterator<Token>, Iterable<Token> {
 			if (current == '"') {
 				return new Token(TokenType.STRING, sb.toString());
 			}
+			if (current < 0x20) {
+				throw new JsonLexerException("Unescaped control character in a string: " + sb);
+			}
 			if (current != '\\') {
 				sb.append(current);
 			}
@@ -87,7 +91,7 @@ public class JsonLexer implements Iterator<Token>, Iterable<Token> {
 					case 'r' -> sb.append('\r');
 					case 't' -> sb.append('\t');
 					case 'u' -> sb.append(unicodeEscape());
-					default -> sb.append('\\').append(next);
+					default -> throw new JsonLexerException("Invalid escape: \\" + next);
 				}
 			}
 			current = consume();
@@ -117,34 +121,55 @@ public class JsonLexer implements Iterator<Token>, Iterable<Token> {
 		return (char) code;
 	}
 
+	/**
+	 * A number as RFC 8259 writes one: an optional minus, an integer part with no leading
+	 * zero, then an optional fraction and an optional exponent, each with at least one
+	 * digit. A fraction or an exponent makes it a {@link TokenType#FLOAT}.
+	 */
 	private Token numberToken(char c) {
-		final StringBuilder sb = new StringBuilder();
-		sb.append(c);
-		while (!isEof()) {
-			final char current = this.input.charAt(this.position);
-			if (Character.isDigit(current) || current == '.') {
-				sb.append(this.input.charAt(this.position++));
-			}
-			else {
-				break;
-			}
+		final int start = this.position - 1;
+		final char first = (c == '-') ? nextDigit() : c;
+		if (first != '0') {
+			skipDigits();
 		}
-		boolean exponent = false;
+		boolean fraction = false;
+		if (!isEof() && this.input.charAt(this.position) == '.') {
+			fraction = true;
+			this.position++;
+			nextDigit();
+			skipDigits();
+		}
 		if (!isEof() && (this.input.charAt(this.position) == 'e' || this.input.charAt(this.position) == 'E')) {
-			exponent = true;
-			sb.append(this.input.charAt(this.position++));
+			fraction = true;
+			this.position++;
 			if (!isEof() && (this.input.charAt(this.position) == '+' || this.input.charAt(this.position) == '-')) {
-				sb.append(this.input.charAt(this.position++));
+				this.position++;
 			}
-			while (!isEof() && Character.isDigit(this.input.charAt(this.position))) {
-				sb.append(this.input.charAt(this.position++));
-			}
+			nextDigit();
+			skipDigits();
 		}
-		final String number = sb.toString();
-		if (exponent || number.contains(".")) {
-			return new Token(TokenType.FLOAT, number);
+		if (!isEof() && isDigit(this.input.charAt(this.position))) {
+			throw new JsonLexerException("Invalid number: " + this.input.substring(start, this.position + 1));
 		}
-		return new Token(TokenType.INT, number);
+		final String number = this.input.substring(start, this.position);
+		return new Token(fraction ? TokenType.FLOAT : TokenType.INT, number);
+	}
+
+	private char nextDigit() {
+		if (isEof() || !isDigit(this.input.charAt(this.position))) {
+			throw new JsonLexerException("Invalid number: a digit expected at " + this.position);
+		}
+		return this.input.charAt(this.position++);
+	}
+
+	private void skipDigits() {
+		while (!isEof() && isDigit(this.input.charAt(this.position))) {
+			this.position++;
+		}
+	}
+
+	private static boolean isDigit(char c) {
+		return c >= '0' && c <= '9';
 	}
 
 	private Token literalToken(char c) {
