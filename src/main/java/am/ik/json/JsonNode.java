@@ -15,7 +15,11 @@ import org.jspecify.annotations.Nullable;
  * <p>
  * A number is parsed without losing a digit: an integer as the smallest of
  * {@code Integer}, {@code Long} and {@code BigInteger} that holds it, a number with a
- * fraction or an exponent as a {@code BigDecimal}.
+ * fraction or an exponent as a {@code BigDecimal}. A {@code BigInteger} or a
+ * {@code BigDecimal} is made when the number is read ({@link #value()},
+ * {@link #optional()}, {@link #asNumber()}, {@link #asBigInteger()},
+ * {@link #asDecimal()}), not when it is parsed: the {@code is} tests and the writers need
+ * none, so a program reading no such number calls nothing of {@code java.math}.
  */
 public class JsonNode {
 
@@ -30,6 +34,11 @@ public class JsonNode {
 	 * @return the underlying value
 	 */
 	public @Nullable Object value() {
+		return (this.value instanceof NumberText number) ? number.toNumber() : this.value;
+	}
+
+	/** The value as it is held: a number needing {@code java.math} as its text. */
+	@Nullable Object held() {
 		return this.value;
 	}
 
@@ -38,7 +47,7 @@ public class JsonNode {
 	}
 
 	public Optional<Object> optional() {
-		return Optional.ofNullable(this.value);
+		return Optional.ofNullable(value());
 	}
 
 	public boolean isBoolean() {
@@ -50,7 +59,7 @@ public class JsonNode {
 	}
 
 	public boolean isNumber() {
-		return this.value instanceof Number;
+		return this.value instanceof Number || this.value instanceof NumberText;
 	}
 
 	public boolean isInteger() {
@@ -62,11 +71,11 @@ public class JsonNode {
 	}
 
 	public boolean isBigInteger() {
-		return this.value instanceof BigInteger;
+		return this.value instanceof BigInteger || (this.value instanceof NumberText number && !number.isDecimal());
 	}
 
 	public boolean isDecimal() {
-		return this.value instanceof BigDecimal;
+		return this.value instanceof BigDecimal || (this.value instanceof NumberText number && number.isDecimal());
 	}
 
 	public boolean isArray() {
@@ -95,6 +104,9 @@ public class JsonNode {
 		if (this.value instanceof Number numberValue) {
 			return numberValue;
 		}
+		if (this.value instanceof NumberText number) {
+			return number.toNumber();
+		}
 		return nullOr("number");
 	}
 
@@ -116,12 +128,18 @@ public class JsonNode {
 		if (this.value instanceof BigInteger bigIntegerValue) {
 			return bigIntegerValue;
 		}
+		if (this.value instanceof NumberText number && !number.isDecimal()) {
+			return number.toBigInteger();
+		}
 		return nullOr("big integer");
 	}
 
 	public @Nullable BigDecimal asDecimal() {
 		if (this.value instanceof BigDecimal decimalValue) {
 			return decimalValue;
+		}
+		if (this.value instanceof NumberText number && number.isDecimal()) {
+			return number.toBigDecimal();
 		}
 		return nullOr("decimal");
 	}

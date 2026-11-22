@@ -64,7 +64,7 @@ public final class JsonWriter {
 	}
 
 	private void write(StringBuilder out, JsonNode node, int level) {
-		final Object value = node.value();
+		final Object value = node.held();
 		if (value instanceof JsonObject object) {
 			writeObject(out, object, level);
 		}
@@ -121,7 +121,7 @@ public final class JsonWriter {
 				out.append(", ");
 			}
 			final JsonNode element = array.get(i);
-			if (element.value() instanceof JsonArray nested) {
+			if (element.held() instanceof JsonArray nested) {
 				writeInlineArray(out, nested);
 			}
 			else {

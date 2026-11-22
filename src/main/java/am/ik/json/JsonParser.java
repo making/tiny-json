@@ -4,9 +4,6 @@
  */
 package am.ik.json;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-
 public class JsonParser {
 
 	private final JsonLexer lexer;
@@ -64,7 +61,7 @@ public class JsonParser {
 			case LEFT_BRACKET -> new JsonNode(parseArray());
 			case STRING -> new JsonNode(consumeToken(TokenType.STRING).value());
 			case INT -> new JsonNode(integer(consumeToken(TokenType.INT).value()));
-			case FLOAT -> new JsonNode(decimal(consumeToken(TokenType.FLOAT).value()));
+			case FLOAT -> new JsonNode(NumberText.decimal(consumeToken(TokenType.FLOAT).value()));
 			case BOOLEAN -> new JsonNode("true".equals(consumeToken(TokenType.BOOLEAN).value()));
 			case NULL -> {
 				consumeToken(TokenType.NULL);
@@ -75,31 +72,26 @@ public class JsonParser {
 	}
 
 	/**
-	 * An integer as the smallest of {@code Integer}, {@code Long} and {@code BigInteger}.
+	 * An integer as the smallest of {@code Integer} and {@code Long} that holds it, else
+	 * as its text, which a {@code BigInteger} is made of when it is read.
 	 */
-	private static Number integer(String text) {
-		final int digits = (text.charAt(0) == '-') ? text.length() - 1 : text.length();
+	private static Object integer(String text) {
+		final boolean negative = text.charAt(0) == '-';
+		final int digits = negative ? text.length() - 1 : text.length();
 		if (digits < 10) {
 			return Integer.parseInt(text);
 		}
-		final BigInteger value = new BigInteger(text);
-		if (value.bitLength() < 32) {
-			return value.intValue();
+		// The lexer lets no leading zero through: more digits are a larger number, and
+		// nineteen of them compare as text.
+		if (digits > 19
+				|| (digits == 19 && text.compareTo(negative ? "-9223372036854775808" : "9223372036854775807") > 0)) {
+			return NumberText.integer(text);
 		}
-		if (value.bitLength() < 64) {
-			return value.longValue();
+		final long value = Long.parseLong(text);
+		if (value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE) {
+			return (int) value;
 		}
 		return value;
-	}
-
-	/** A number with a fraction or an exponent, with the digits it is written with. */
-	private static BigDecimal decimal(String text) {
-		try {
-			return new BigDecimal(text);
-		}
-		catch (NumberFormatException ex) {
-			throw new JsonParseException("Number out of range: " + text);
-		}
 	}
 
 	/** Whether a comma is next, consumed: another member or element follows it. */

@@ -27,30 +27,41 @@ class JsonParserTest {
 
 	@Test
 	void parseIntegerAsTheSmallestTypeThatHoldsIt() {
-		final String text = "[2147483647,-2147483648,2147483648,9223372036854775807,-9223372036854775809]";
+		final String text = "[2147483647,-2147483648,2147483648,9223372036854775807,-9223372036854775808,"
+				+ "9223372036854775808,-9223372036854775809,123456789012345678901234567890]";
 		final JsonArray array = Objects.requireNonNull(Json.parse(text).asArray());
 		assertThat(array.values()).extracting(JsonNode::value)
-			.containsExactly(Integer.MAX_VALUE, Integer.MIN_VALUE, 2147483648L, Long.MAX_VALUE,
-					new BigInteger("-9223372036854775809"));
+			.containsExactly(Integer.MAX_VALUE, Integer.MIN_VALUE, 2147483648L, Long.MAX_VALUE, Long.MIN_VALUE,
+					new BigInteger("9223372036854775808"), new BigInteger("-9223372036854775809"),
+					new BigInteger("123456789012345678901234567890"));
 		assertThat(array.get(2).asLong()).isEqualTo(2147483648L);
-		assertThat(array.get(4).isBigInteger()).isTrue();
-		assertThat(array.values()).allMatch(JsonNode::isNumber);
+		assertThat(array.values().subList(5, 8)).allMatch(JsonNode::isBigInteger)
+			.noneMatch(JsonNode::isLong)
+			.allMatch(node -> Objects.equals(node.asBigInteger(), node.asNumber()));
+		assertThat(array.values()).allMatch(JsonNode::isNumber).noneMatch(JsonNode::isDecimal);
 		assertThat(Json.stringify(array)).isEqualTo(text);
 	}
 
-	@Test
-	void parseDecimal() {
-		final JsonNode node = Json.parse("0.12345678901234567890");
+	/**
+	 * A fraction or an exponent reads as the {@code BigDecimal} of its text and is
+	 * written as that {@code BigDecimal}'s {@code toString()}, from the text alone.
+	 */
+	@ParameterizedTest
+	@ValueSource(strings = { "0.12345678901234567890", "1.50e3", "-5E-1", "2e+2", "1.5", "-12.345", "0.05", "0.0",
+			"-0.0", "-0e0", "0e5", "0.00e-3", "0.000001", "0.0000001", "1e-7", "123.456e-10", "1e00000000000000000005",
+			"12345678901234567890.5e3", "1e2147483647", "10e2147483648", "0.0e2147483648", "9.9e-2147483646" })
+	void parseDecimalAsTheBigDecimalOfItsText(String text) {
+		final BigDecimal expected = new BigDecimal(text);
+		final JsonNode node = Json.parse(text);
 		assertThat(node.isDecimal()).isTrue();
-		assertThat(node.asDecimal()).isEqualTo(new BigDecimal("0.12345678901234567890"));
-		assertThat(Json.stringify(node)).isEqualTo("0.12345678901234567890");
-	}
-
-	@Test
-	void parseDecimalWithExponent() {
-		final JsonArray array = Objects.requireNonNull(Json.parse("[1.50e3, -5E-1, 2e+2]").asArray());
-		assertThat(array.values()).allMatch(JsonNode::isDecimal);
-		assertThat(Json.stringify(array)).isEqualTo("[1.50E+3,-0.5,2E+2]");
+		assertThat(node.isNumber()).isTrue();
+		assertThat(node.isBigInteger()).isFalse();
+		assertThat(node.asDecimal()).isEqualTo(expected);
+		assertThat(node.value()).isEqualTo(expected);
+		assertThat(node.asNumber()).isEqualTo(expected);
+		assertThat(node.optional()).contains(expected);
+		assertThat(Json.stringify(node)).isEqualTo(expected.toString());
+		assertThat(Json.stringify(node, JsonWriter.pretty())).isEqualTo(expected.toString());
 	}
 
 	@Test
@@ -147,7 +158,8 @@ class JsonParserTest {
 
 	@ParameterizedTest
 	@ValueSource(strings = { "", "[1 2]", "[1,]", "[,1]", "{\"a\":1,}", "{\"a\":1 \"b\":2}", "{} x", "1 2", "01", "-",
-			"1e9999999999", "1.", ".5", "1e", "1.5e+", "+1", "\"\t\"", "\"\\x\"", "\"\\u12\"", "\u000b1", "\u0661" })
+			"1e9999999999", "1e10000000000", "0.5e-2147483647", "1e-2147483648", "1.", ".5", "1e", "1.5e+", "+1",
+			"\"\t\"", "\"\\x\"", "\"\\u12\"", "\u000b1", "\u0661" })
 	void refuseWhatIsNoJson(String text) {
 		assertThatThrownBy(() -> Json.parse(text)).isInstanceOfAny(JsonParseException.class, JsonLexerException.class);
 	}

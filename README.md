@@ -32,6 +32,12 @@ Json.stringify(post, JsonWriter.pretty(2));
 `JsonWriter.pretty(2).inlineArrays()` writes arrays on one line (`[1, 2]`) instead of
 one element a line, which suits request and response dumps.
 
+A number is read without losing a digit: an integer as an `Integer`, a `Long` or a
+`BigInteger`, one with a fraction or an exponent as a `BigDecimal`. A `BigInteger` or a
+`BigDecimal` is made when the number is read (`value()`, `optional()`, `asNumber()`,
+`asBigInteger()`, `asDecimal()`), not when it is parsed. The `is` tests and the writers make
+none, so a program compiled ahead of time that reads no such number holds no `java.math`.
+
 The API is null-marked with [JSpecify](https://jspecify.dev): accessors such as
 `asString()` return `@Nullable String`, and the build enforces it with NullAway.
 
