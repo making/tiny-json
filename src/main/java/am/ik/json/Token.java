@@ -15,29 +15,5 @@
  */
 package am.ik.json;
 
-public class Token {
-	private final TokenType type;
-
-	private final String value;
-
-	public Token(TokenType type, String value) {
-		this.type = type;
-		this.value = value;
-	}
-
-	public TokenType type() {
-		return type;
-	}
-
-	public String value() {
-		return value;
-	}
-
-	@Override
-	public String toString() {
-		return "Token{" +
-			   "type=" + type +
-			   ", value='" + value + '\'' +
-			   '}';
-	}
+public record Token(TokenType type, String value) {
 }

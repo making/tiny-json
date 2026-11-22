@@ -16,7 +16,11 @@
 package am.ik.json;
 
 public class JsonLexerException extends RuntimeException {
+
+	private static final long serialVersionUID = 1L;
+
 	public JsonLexerException(String message) {
 		super(message);
 	}
+
 }

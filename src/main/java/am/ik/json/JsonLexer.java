@@ -20,76 +20,64 @@ import java.util.NoSuchElementException;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.jspecify.annotations.Nullable;
+
 public class JsonLexer implements Iterator<Token>, Iterable<Token> {
+
 	private final String input;
 
 	private int position;
 
 	public JsonLexer(String input) {
 		this.input = input;
-		this.position = 0;
 	}
 
 	public Token nextToken() {
-		Character current;
-		do {
-			current = this.consume();
-			if (current == null) {
+		char current;
+		while (true) {
+			final Character next = consume();
+			if (next == null) {
 				return new Token(TokenType.EOF, "");
 			}
-		} while (Character.isWhitespace(current));
-
-		if (current == '{') {
-			return new Token(TokenType.LEFT_BRACE, "{");
+			if (!Character.isWhitespace(next)) {
+				current = next;
+				break;
+			}
 		}
-		else if (current == '}') {
-			return new Token(TokenType.RIGHT_BRACE, "}");
-		}
-		else if (current == '[') {
-			return new Token(TokenType.LEFT_BRACKET, "[");
-		}
-		else if (current == ']') {
-			return new Token(TokenType.RIGHT_BRACKET, "]");
-		}
-		else if (current == ':') {
-			return new Token(TokenType.COLON, ":");
-		}
-		else if (current == ',') {
-			return new Token(TokenType.COMMA, ",");
-		}
-		else if (current == '"') {
-			return this.stringToken();
-		}
-		else if (Character.isDigit(current) || current == '-') {
-			return this.numberToken(current);
-		}
-		else if (Character.isLetter(current)) {
-			return this.literalToken(current);
-		}
-		throw new JsonLexerException("Invalid Character: " + current);
+		return switch (current) {
+			case '{' -> new Token(TokenType.LEFT_BRACE, "{");
+			case '}' -> new Token(TokenType.RIGHT_BRACE, "}");
+			case '[' -> new Token(TokenType.LEFT_BRACKET, "[");
+			case ']' -> new Token(TokenType.RIGHT_BRACKET, "]");
+			case ':' -> new Token(TokenType.COLON, ":");
+			case ',' -> new Token(TokenType.COMMA, ",");
+			case '"' -> stringToken();
+			default -> {
+				if (Character.isDigit(current) || current == '-') {
+					yield numberToken(current);
+				}
+				if (Character.isLetter(current)) {
+					yield literalToken(current);
+				}
+				throw new JsonLexerException("Invalid Character: " + current);
+			}
+		};
 	}
-
-	private char current() {
-		return this.input.charAt(this.position);
-	}
-
 
 	private boolean isEof() {
 		return this.position >= this.input.length();
 	}
 
-	private Character consume() {
-		if (this.isEof()) {
+	private @Nullable Character consume() {
+		if (isEof()) {
 			return null;
 		}
-		final char current = this.current();
-		this.position++;
-		return current;
+		return this.input.charAt(this.position++);
 	}
 
 	private Token stringToken() {
 		final StringBuilder sb = new StringBuilder();
-		Character current = this.consume();
+		Character current = consume();
 		while (current != null) {
 			if (current == '"') {
 				return new Token(TokenType.STRING, sb.toString());
@@ -98,33 +86,20 @@ public class JsonLexer implements Iterator<Token>, Iterable<Token> {
 				sb.append(current);
 			}
 			else {
-				final Character next = this.consume();
+				final Character next = consume();
 				if (next == null) {
 					throw new JsonLexerException("Unterminated string: " + sb);
 				}
 				switch (next) {
-					case '"':
-					case '\\':
-					case '/':
-						sb.append(next);
-						break;
-					case 'f':
-						sb.append('\f');
-						break;
-					case 'n':
-						sb.append('\n');
-						break;
-					case 'r':
-						sb.append('\r');
-						break;
-					case 't':
-						sb.append('\t');
-						break;
-					default:
-						sb.append('\\').append(next);
+					case '"', '\\', '/' -> sb.append(next);
+					case 'f' -> sb.append('\f');
+					case 'n' -> sb.append('\n');
+					case 'r' -> sb.append('\r');
+					case 't' -> sb.append('\t');
+					default -> sb.append('\\').append(next);
 				}
 			}
-			current = this.consume();
+			current = consume();
 		}
 		throw new JsonLexerException("Unterminated string: " + sb);
 	}
@@ -132,10 +107,10 @@ public class JsonLexer implements Iterator<Token>, Iterable<Token> {
 	private Token numberToken(char c) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(c);
-		while (!this.isEof()) {
-			final char current = this.current();
+		while (!isEof()) {
+			final char current = this.input.charAt(this.position);
 			if (Character.isDigit(current) || current == '.') {
-				sb.append(this.consume());
+				sb.append(this.input.charAt(this.position++));
 			}
 			else {
 				break;
@@ -145,47 +120,40 @@ public class JsonLexer implements Iterator<Token>, Iterable<Token> {
 		if (number.contains(".")) {
 			return new Token(TokenType.FLOAT, number);
 		}
-		else {
-			return new Token(TokenType.INT, number);
-		}
+		return new Token(TokenType.INT, number);
 	}
 
 	private Token literalToken(char c) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(c);
-		while (!this.isEof()) {
-			final char current = this.current();
+		while (!isEof()) {
+			final char current = this.input.charAt(this.position);
 			if (Character.isLetter(current)) {
-				sb.append(this.consume());
+				sb.append(this.input.charAt(this.position++));
 			}
 			else {
 				break;
 			}
 		}
 		final String literal = sb.toString();
-		switch (literal) {
-			case "true":
-			case "false":
-				return new Token(TokenType.BOOLEAN, literal);
-			case "null":
-				return new Token(TokenType.NULL, literal);
-			default:
-				throw new JsonLexerException("Invalid literal: " + literal);
-		}
+		return switch (literal) {
+			case "true", "false" -> new Token(TokenType.BOOLEAN, literal);
+			case "null" -> new Token(TokenType.NULL, literal);
+			default -> throw new JsonLexerException("Invalid literal: " + literal);
+		};
 	}
-
 
 	@Override
 	public boolean hasNext() {
-		return !this.isEof();
+		return !isEof();
 	}
 
 	@Override
 	public Token next() {
-		if (this.isEof()) {
+		if (isEof()) {
 			throw new NoSuchElementException("EOF");
 		}
-		return this.nextToken();
+		return nextToken();
 	}
 
 	@Override
@@ -196,4 +164,5 @@ public class JsonLexer implements Iterator<Token>, Iterable<Token> {
 	public Stream<Token> stream() {
 		return StreamSupport.stream(this.spliterator(), false);
 	}
+
 }

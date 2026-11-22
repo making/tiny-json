@@ -15,6 +15,8 @@
  */
 package am.ik.json;
 
+import java.util.Objects;
+
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -81,40 +83,44 @@ class JsonParserTest {
 	void parseArray() {
 		final JsonNode node = Json.parse("[100, \"hello\"]");
 		assertThat(node.isArray()).isTrue();
-		final JsonArray array = node.asArray();
+		final JsonArray array = Objects.requireNonNull(node.asArray());
 		assertThat(array.size()).isEqualTo(2);
 		assertThat(array.get(0).isInteger()).isTrue();
 		assertThat(array.get(0).asInteger()).isEqualTo(100);
 		assertThat(array.get(1).isString()).isTrue();
 		assertThat(array.get(1).asString()).isEqualTo("hello");
-		assertThat(Json.stringify(array)).isEqualTo("[100, \"hello\"]");
+		assertThat(Json.stringify(array)).isEqualTo("[100,\"hello\"]");
 	}
 
 	@Test
 	void parseObject() {
-		final JsonNode node = Json.parse("{\"url\":\"/classes\",\"method\":\"POST\",\"headers\":{\"user-agent\":\"curl/7.88.1\",\"host\":\"127.0.0.1:8080\",\"content-length\":\"3\",\"accept\":\"*/*\",\"content-type\":\"application/x-www-form-urlencoded\"},\"body\":\"{\\\"foo\\\":\\\"bar\\\"}\",\"kv\":{},\"params\":{}}");
+		final JsonNode node = Json.parse(
+				"{\"url\":\"/classes\",\"method\":\"POST\",\"headers\":{\"user-agent\":\"curl/7.88.1\",\"host\":\"127.0.0.1:8080\",\"content-length\":\"3\",\"accept\":\"*/*\",\"content-type\":\"application/x-www-form-urlencoded\"},\"body\":\"{\\\"foo\\\":\\\"bar\\\"}\",\"kv\":{},\"params\":{}}");
 		assertThat(node.isObject()).isTrue();
-		final JsonObject json = node.asObject();
+		final JsonObject json = Objects.requireNonNull(node.asObject());
 		assertThat(json.asMap().keySet()).containsExactlyInAnyOrder("url", "method", "headers", "body", "kv", "params");
 		assertThat(json.get("url").asString()).isEqualTo("/classes");
 		assertThat(json.get("method").asString()).isEqualTo("POST");
-		final JsonObject headers = json.get("headers").asObject();
-		assertThat(headers.asMap().keySet()).containsExactlyInAnyOrder("user-agent", "host", "content-length", "accept", "content-type");
+		final JsonObject headers = Objects.requireNonNull(json.get("headers").asObject());
+		assertThat(headers.asMap().keySet()).containsExactlyInAnyOrder("user-agent", "host", "content-length", "accept",
+				"content-type");
 		assertThat(headers.get("user-agent").asString()).isEqualTo("curl/7.88.1");
 		assertThat(headers.get("host").asString()).isEqualTo("127.0.0.1:8080");
 		assertThat(headers.get("content-length").asString()).isEqualTo("3");
 		assertThat(headers.get("accept").asString()).isEqualTo("*/*");
 		assertThat(headers.get("content-type").asString()).isEqualTo("application/x-www-form-urlencoded");
 		assertThat(json.get("body").asString()).isEqualTo("{\"foo\":\"bar\"}");
-		assertThat(json.get("params").asObject().isEmpty()).isTrue();
-		assertThat(json.get("kv").asObject().isEmpty()).isTrue();
-		assertThat(Json.stringify(json)).isEqualTo("{\"url\":\"\\/classes\",\"method\":\"POST\",\"headers\":{\"user-agent\":\"curl\\/7.88.1\",\"host\":\"127.0.0.1:8080\",\"content-length\":\"3\",\"accept\":\"*\\/*\",\"content-type\":\"application\\/x-www-form-urlencoded\"},\"body\":\"{\\\"foo\\\":\\\"bar\\\"}\",\"kv\":{},\"params\":{}}");
+		assertThat(Objects.requireNonNull(json.get("params").asObject()).isEmpty()).isTrue();
+		assertThat(Objects.requireNonNull(json.get("kv").asObject()).isEmpty()).isTrue();
+		assertThat(Json.stringify(json)).isEqualTo(
+				"{\"url\":\"\\/classes\",\"method\":\"POST\",\"headers\":{\"user-agent\":\"curl\\/7.88.1\",\"host\":\"127.0.0.1:8080\",\"content-length\":\"3\",\"accept\":\"*\\/*\",\"content-type\":\"application\\/x-www-form-urlencoded\"},\"body\":\"{\\\"foo\\\":\\\"bar\\\"}\",\"kv\":{},\"params\":{}}");
 	}
 
 	@Test
 	void readme() {
-		final JsonObject json = Json.parse("{\"foo\": \"bar\"}").asObject();
+		final JsonObject json = Objects.requireNonNull(Json.parse("{\"foo\": \"bar\"}").asObject());
 		assertThat(json.get("foo").asString()).isEqualTo("bar");
 		assertThat(Json.stringify(json)).isEqualTo("{\"foo\":\"bar\"}");
 	}
+
 }

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>am.ik.json</groupId>
@@ -11,12 +11,13 @@
 	<description>Tiny Json Parser</description>
 
 	<properties>
-		<java.version>1.8</java.version>
-		<maven.compiler.source>${java.version}</maven.compiler.source>
-		<maven.compiler.target>${java.version}</maven.compiler.target>
+		<java.version>21</java.version>
+		<maven.compiler.release>${java.version}</maven.compiler.release>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring-boot.version>3.1.1</spring-boot.version>
+		<spring-boot.version>4.2.0</spring-boot.version>
+		<archunit.version>1.5.1</archunit.version>
 	</properties>
+
 	<licenses>
 		<license>
 			<name>Apache License, Version 2.0</name>
@@ -25,12 +26,11 @@
 		</license>
 	</licenses>
 	<scm>
-		<url>https://github.com/making/tiy-json</url>
-		<connection>scm:git:git@github.com:making/tiy-json.git</connection>
-		<developerConnection>scm:git:git@github.com:making/tiy-json.git
-		</developerConnection>
+		<url>https://github.com/making/tiny-json</url>
+		<connection>scm:git:git@github.com:making/tiny-json.git</connection>
+		<developerConnection>scm:git:git@github.com:making/tiny-json.git</developerConnection>
 	</scm>
-	<url>https://github.com/making/tiy-json</url>
+	<url>https://github.com/making/tiny-json</url>
 
 	<developers>
 		<developer>
@@ -40,20 +40,27 @@
 			<url>https://twitter.com/making</url>
 		</developer>
 	</developers>
+
 	<dependencies>
 		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-api</artifactId>
-			<scope>test</scope>
+			<groupId>org.jspecify</groupId>
+			<artifactId>jspecify</artifactId>
+			<version>1.0.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-engine</artifactId>
+			<artifactId>junit-jupiter</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.tngtech.archunit</groupId>
+			<artifactId>archunit-junit5</artifactId>
+			<version>${archunit.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
@@ -62,8 +69,82 @@
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.16.0</version>
+			</plugin>
+			<plugin>
+				<groupId>am.ik.maven</groupId>
+				<artifactId>nullability-maven-plugin</artifactId>
+				<version>0.5.3</version>
+				<extensions>true</extensions>
+				<executions>
+					<execution>
+						<goals>
+							<goal>configure</goal>
+							<goal>generate-package-info</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<checking>tests</checking>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>io.spring.javaformat</groupId>
+				<artifactId>spring-javaformat-maven-plugin</artifactId>
+				<version>0.0.48</version>
+				<executions>
+					<execution>
+						<phase>validate</phase>
+						<inherited>true</inherited>
+						<goals>
+							<goal>validate</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>3.1.2</version>
+				<version>3.6.1</version>
+			</plugin>
+			<!-- What Maven Central requires beside the jar: the sources and the javadoc. -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>3.4.0</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>3.12.0</version>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.sonatype.central</groupId>
+				<artifactId>central-publishing-maven-plugin</artifactId>
+				<version>0.12.0</version>
+				<extensions>true</extensions>
+				<configuration>
+					<publishingServerId>central</publishingServerId>
+					<autoPublish>true</autoPublish>
+					<waitUntil>published</waitUntil>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
@@ -79,12 +160,4 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
-
-	<distributionManagement>
-		<repository>
-			<id>sonatype-snapshots</id>
-			<name>sonatype-snapshots</name>
-			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
-		</repository>
-	</distributionManagement>
 </project>

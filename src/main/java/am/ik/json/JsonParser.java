@@ -16,6 +16,7 @@
 package am.ik.json;
 
 public class JsonParser {
+
 	private final JsonLexer lexer;
 
 	private Token currentToken;
@@ -33,11 +34,9 @@ public class JsonParser {
 		final JsonObject jsonObject = new JsonObject();
 		consumeToken(TokenType.LEFT_BRACE);
 		while (this.currentToken.type() != TokenType.RIGHT_BRACE) {
-			final Token token = consumeToken(TokenType.STRING);
-			final String key = token.value();
+			final String key = consumeToken(TokenType.STRING).value();
 			consumeToken(TokenType.COLON);
-			final JsonNode value = parseValue();
-			jsonObject.put(key, value);
+			jsonObject.put(key, parseValue());
 			if (this.currentToken.type() == TokenType.COMMA) {
 				consumeToken(TokenType.COMMA);
 			}
@@ -50,8 +49,7 @@ public class JsonParser {
 		final JsonArray jsonArray = new JsonArray();
 		consumeToken(TokenType.LEFT_BRACKET);
 		while (this.currentToken.type() != TokenType.RIGHT_BRACKET) {
-			final JsonNode value = parseValue();
-			jsonArray.add(value);
+			jsonArray.add(parseValue());
 			if (this.currentToken.type() == TokenType.COMMA) {
 				consumeToken(TokenType.COMMA);
 			}
@@ -61,45 +59,29 @@ public class JsonParser {
 	}
 
 	private JsonNode parseValue() {
-		final TokenType type = this.currentToken.type();
-		switch (type) {
-			case LEFT_BRACE:
-				return new JsonNode(parseObject());
-			case LEFT_BRACKET:
-				return new JsonNode(parseArray());
-			case STRING:
-				final String stringValue = this.currentToken.value();
-				consumeToken(TokenType.STRING);
-				return new JsonNode(stringValue);
-			case INT:
-				final int intValue = Integer.parseInt(this.currentToken.value());
-				consumeToken(TokenType.INT);
-				return new JsonNode(intValue);
-			case FLOAT:
-				final float floatValue = Float.parseFloat(this.currentToken.value());
-				consumeToken(TokenType.FLOAT);
-				return new JsonNode(floatValue);
-			case BOOLEAN:
-				// TODO: `Boolean.parseBoolean` doesn't work with teavm-wasi 0.2.7
-				final boolean booleanValue = "true".equals(this.currentToken.value());
-				consumeToken(TokenType.BOOLEAN);
-				return new JsonNode(booleanValue);
-			case NULL:
+		return switch (this.currentToken.type()) {
+			case LEFT_BRACE -> new JsonNode(parseObject());
+			case LEFT_BRACKET -> new JsonNode(parseArray());
+			case STRING -> new JsonNode(consumeToken(TokenType.STRING).value());
+			case INT -> new JsonNode(Integer.parseInt(consumeToken(TokenType.INT).value()));
+			case FLOAT -> new JsonNode(Float.parseFloat(consumeToken(TokenType.FLOAT).value()));
+			case BOOLEAN -> new JsonNode("true".equals(consumeToken(TokenType.BOOLEAN).value()));
+			case NULL -> {
 				consumeToken(TokenType.NULL);
-				return new JsonNode(null);
-			default:
-				throw new JsonParseException("Unexpected token: " + this.currentToken.type());
-		}
+				yield new JsonNode(null);
+			}
+			default -> throw new JsonParseException("Unexpected token: " + this.currentToken.type());
+		};
 	}
 
 	private Token consumeToken(TokenType expectedType) {
 		final Token token = this.currentToken;
-		if (this.currentToken.type() == expectedType) {
-			this.currentToken = this.lexer.nextToken();
+		if (this.currentToken.type() != expectedType) {
+			throw new JsonParseException(
+					"Token mismatch. Expected: " + expectedType + ", found: " + this.currentToken.type());
 		}
-		else {
-			throw new JsonParseException("Token mismatch. Expected: " + expectedType + ", found: " + this.currentToken.type());
-		}
+		this.currentToken = this.lexer.nextToken();
 		return token;
 	}
+
 }

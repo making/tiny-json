@@ -23,13 +23,14 @@ class JsonObjectTest {
 
 	@Test
 	void testToString() {
-		final JsonObject json = new JsonObject()
-				.put("data", "Hello World!")
-				.put("status", 200)
-				.put("base64", false)
-				.put("headers", new JsonObject().put("X-Generated-By", "wasm-workers-server"))
-				.put("kv", new JsonObject());
-		assertThat(json.toString()).isEqualTo("{\"data\":\"Hello World!\",\"status\":200,\"base64\":false,\"headers\":{\"X-Generated-By\":\"wasm-workers-server\"},\"kv\":{}}");
+		final JsonObject json = new JsonObject().put("data", "Hello World!")
+			.put("status", 200)
+			.put("base64", false)
+			.put("headers", new JsonObject().put("X-Generated-By", "wasm-workers-server"))
+			.put("kv", new JsonObject());
+		assertThat(json.toString()).isEqualTo(
+				"{\"data\":\"Hello World!\",\"status\":200,\"base64\":false,\"headers\":{\"X-Generated-By\":\"wasm-workers-server\"},\"kv\":{}}");
+		assertThat(new JsonObject().put("a\"b\n", 1).toString()).isEqualTo("{\"a\\\"b\\n\":1}");
 	}
 
 	@Test
@@ -39,4 +40,5 @@ class JsonObjectTest {
 		assertThat(foo).isNotNull();
 		assertThat(foo.isNull()).isTrue();
 	}
+
 }

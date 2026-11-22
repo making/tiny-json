@@ -15,17 +15,26 @@
  */
 package am.ik.json;
 
-import java.util.Objects;
 import java.util.Optional;
 
-public class JsonNode {
-	private final Object value;
+import org.jspecify.annotations.Nullable;
 
-	public JsonNode(Object value) {
+/**
+ * A JSON value. The accessors return {@code null} when the value is JSON {@code null}.
+ */
+public class JsonNode {
+
+	private final @Nullable Object value;
+
+	public JsonNode(@Nullable Object value) {
 		this.value = value;
 	}
 
-	public Object value() {
+	/**
+	 * Returns the underlying Java value, or {@code null} for JSON {@code null}.
+	 * @return the underlying value
+	 */
+	public @Nullable Object value() {
 		return this.value;
 	}
 
@@ -65,113 +74,85 @@ public class JsonNode {
 		return this.value instanceof JsonObject;
 	}
 
-	public Boolean asBoolean() {
-		if (this.value == null) {
-			return null;
+	public @Nullable Boolean asBoolean() {
+		if (this.value instanceof Boolean booleanValue) {
+			return booleanValue;
 		}
-		if (isBoolean()) {
-			return (Boolean) this.value;
-		}
-		throw new IllegalStateException("Value is not a boolean");
+		return nullOr("boolean");
 	}
 
-	public String asString() {
-		if (this.value == null) {
-			return null;
+	public @Nullable String asString() {
+		if (this.value instanceof String stringValue) {
+			return stringValue;
 		}
-		if (isString()) {
-			return (String) this.value;
-		}
-		throw new IllegalStateException("Value is not a string");
+		return nullOr("string");
 	}
 
-	public Number asNumber() {
-		if (this.value == null) {
-			return null;
+	public @Nullable Number asNumber() {
+		if (this.value instanceof Number numberValue) {
+			return numberValue;
 		}
-		if (isNumber()) {
-			return (Number) this.value;
-		}
-		throw new IllegalStateException("Value is not a number");
+		return nullOr("number");
 	}
 
-	public Integer asInteger() {
-		if (this.value == null) {
-			return null;
+	public @Nullable Integer asInteger() {
+		if (this.value instanceof Integer integerValue) {
+			return integerValue;
 		}
-		if (isInteger()) {
-			return (Integer) this.value;
-		}
-		throw new IllegalStateException("Value is not an integer");
+		return nullOr("integer");
 	}
 
-	public Float asFloat() {
-		if (this.value == null) {
-			return null;
+	public @Nullable Float asFloat() {
+		if (this.value instanceof Float floatValue) {
+			return floatValue;
 		}
-		if (isFloat()) {
-			return (Float) this.value;
-		}
-		throw new IllegalStateException("Value is not a float");
+		return nullOr("float");
 	}
 
-	public JsonArray asArray() {
-		if (this.value == null) {
-			return null;
+	public @Nullable JsonArray asArray() {
+		if (this.value instanceof JsonArray arrayValue) {
+			return arrayValue;
 		}
-		if (isArray()) {
-			return (JsonArray) this.value;
-		}
-		throw new IllegalStateException("Value is not an array");
+		return nullOr("array");
 	}
 
-	public JsonObject asObject() {
+	public @Nullable JsonObject asObject() {
+		if (this.value instanceof JsonObject objectValue) {
+			return objectValue;
+		}
+		return nullOr("object");
+	}
+
+	private <T> @Nullable T nullOr(String expected) {
 		if (this.value == null) {
 			return null;
 		}
-		if (isObject()) {
-			return (JsonObject) this.value;
-		}
-		throw new IllegalStateException("Value is not an object");
+		throw new IllegalStateException("Value is not a " + expected);
 	}
 
 	@Override
 	public String toString() {
-		if (this.value == null) {
-			return "null";
-		}
-		if (isString()) {
-			return "\"" + stringify((String) this.value) + "\"";
-		}
-		return Objects.toString(this.value);
+		return switch (this.value) {
+			case null -> "null";
+			case String stringValue -> "\"" + escape(stringValue) + "\"";
+			case Object objectValue -> objectValue.toString();
+		};
 	}
 
-	private static String stringify(String value) {
+	static String escape(String value) {
 		final StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < value.length(); i++) {
 			final char c = value.charAt(i);
-			switch (c) {
-				case '\f':
-					sb.append("\\f");
-					break;
-				case '\n':
-					sb.append("\\n");
-					break;
-				case '\r':
-					sb.append("\\r");
-					break;
-				case '\t':
-					sb.append("\\t");
-					break;
-				case '\\':
-				case '"':
-				case '/':
-					sb.append('\\').append(c);
-					break;
-				default:
-					sb.append(c);
-			}
+			sb.append(switch (c) {
+				case '\f' -> "\\f";
+				case '\n' -> "\\n";
+				case '\r' -> "\\r";
+				case '\t' -> "\\t";
+				case '\\', '"', '/' -> "\\" + c;
+				default -> String.valueOf(c);
+			});
 		}
 		return sb.toString();
 	}
+
 }

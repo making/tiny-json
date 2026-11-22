@@ -188,4 +188,5 @@ class JsonLexerTest {
 		assertThat(token.type()).isEqualTo(TokenType.STRING);
 		assertThat(token.value()).isEqualTo("{\"key\":\"value\"}");
 	}
+
 }

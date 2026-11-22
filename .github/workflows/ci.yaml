@@ -8,102 +8,125 @@ on:
     paths:
     - src/**
     - pom.xml
+    - integration-tests/**
+    - .mvn/**
     - .github/workflows/ci.yaml
-  pull_request_target:
+  pull_request:
     branches:
     - develop
     - main
     paths:
     - src/**
     - pom.xml
+    - integration-tests/**
+    - .mvn/**
     - .github/workflows/ci.yaml
+  workflow_dispatch: {}
+
 jobs:
-  build:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['21', '25']
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@v7
+    - name: Set up JDK ${{ matrix.java }}
+      uses: actions/setup-java@v6
+      with:
+        java-version: ${{ matrix.java }}
+        distribution: 'liberica'
+        cache: maven
+    - name: Verify
+      run: ./mvnw -V --no-transfer-progress clean verify
+
+  # tiny-json must stay inside the subset of Java that rontolisp's experimental Java
+  # front end compiles, and the compiled module must run without a JDK. rontolisp is
+  # built from its source rather than taken from a release: its Java front end is
+  # newer than the published snapshot binary.
+  integration:
+    needs: [test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@v7
+    - name: Check out rontolisp
+      uses: actions/checkout@v7
+      with:
+        repository: making/rontolisp
+        path: rontolisp
+    - name: Set up JDK 25
+      uses: actions/setup-java@v6
+      with:
+        java-version: '25'
+        distribution: 'liberica'
+        cache: maven
+    - name: Build rontolisp
+      run: ./mvnw -V --no-transfer-progress -DskipTests package
+      working-directory: rontolisp
+    - name: Install wasmtime
+      uses: bytecodealliance/actions/wasmtime/setup@v1
+      with:
+        version: "v51.0.0"
+    - name: Integration test
+      run: ./integration-tests/hello-wasm/run.sh
+
+  deploy:
+    needs: [test, integration]
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v7
     - name: Import Secrets
       id: secrets
-      uses: hashicorp/vault-action@v2.5.0
+      uses: hashicorp/vault-action@v4.0.0
       with:
         exportToken: true
-        exportEnv: true
         method: jwt
         url: ${{ secrets.VAULT_ADDR }}
         role: cicd
         secrets: |
-          kv/data/cicd/sonatype username | SONATYPE_USERNAME ;
-          kv/data/cicd/sonatype password | SONATYPE_PASSWORD ;
+          kv/data/cicd/maven_central username | MAVEN_CENTRAL_USERNAME ;
+          kv/data/cicd/maven_central password | MAVEN_CENTRAL_PASSWORD ;
           kv/data/cicd/gpg secring | GPG_SECRING ;
           kv/data/cicd/gpg passphrase | GPG_PASSPHRASE ;
-    - name: Set up JDK 17
-      uses: actions/setup-java@v3
+    - name: Set up JDK 25
+      uses: actions/setup-java@v6
       with:
-        java-version: '17'
+        java-version: '25'
         distribution: 'liberica'
         cache: maven
         gpg-private-key: ${{ steps.secrets.outputs.GPG_SECRING }}
         gpg-passphrase: ${{ steps.secrets.outputs.GPG_PASSPHRASE }}
-    - name: Unit Tests
-      run: ./mvnw -V --no-transfer-progress clean install
-    - name: Set up wasmtime
-      run: curl https://wasmtime.dev/install.sh -sSf | bash
-    - name: Integration Tests
-      run: |
-        export PATH=${HOME}/.wasmtime/bin:${PATH}
-        ./integration-tests/hello-wasm/run.sh
-    - name: Deploy to sonatype-snapshots
-      if: github.ref == 'refs/heads/develop'
-      run: |
-        set -e
-        cat > settings.xml <<EOF
-        <settings>
-          <servers>
-            <server>
-               <id>sonatype-snapshots</id>
-               <username>${SONATYPE_USERNAME}</username>
-               <password>${SONATYPE_PASSWORD}</password>
-            </server>
-          </servers>
-        </settings>
-        EOF
-        CURRENT_VERSION=$(grep '<version>' pom.xml | head -n 1 | sed -e 's|<version>||g' -e 's|</version>||g' -e 's| ||g' |  tr -d '\t')
-        if [ "${CURRENT_VERSION}" = "$(echo ${CURRENT_VERSION} | grep "\-SNAPSHOT")" ];then
-          ./mvnw -V deploy -s settings.xml --no-transfer-progress -DskipTests=true -DserverId=sonatype-snapshots
-        fi
-    - name: Deploy to sonatype-releases
-      if: github.ref == 'refs/heads/main'
+    - name: Generates Maven Settings
+      uses: s4u/maven-settings-action@v4.1.0
+      with:
+        servers: |
+          [{
+              "id": "central",
+              "username": "${{ steps.secrets.outputs.MAVEN_CENTRAL_USERNAME }}",
+              "password": "${{ steps.secrets.outputs.MAVEN_CENTRAL_PASSWORD }}"
+          }]
+    # The pom attaches the sources and the javadoc; the plugin publishes a snapshot
+    # from develop and a release from main.
+    - name: Deploy to Maven Central
       run: |
         set -e
-        cat > settings.xml <<EOF
-        <settings>
-          <servers>
-            <server>
-               <id>repo</id>
-               <username>${SONATYPE_USERNAME}</username>
-               <password>${SONATYPE_PASSWORD}</password>
-            </server>
-          </servers>
-        </settings>
-        EOF
-        mvn -V \
-            javadoc:jar \
-            source:jar \
+        ./mvnw -V \
             package \
             org.apache.maven.plugins:maven-gpg-plugin:3.0.1:sign \
-            org.sonatype.plugins:nexus-staging-maven-plugin:1.6.13:deploy \
+            deploy \
             --no-transfer-progress \
-            -s settings.xml \
-            -DserverId=repo \
             -Dgpg.passphrase=${GPG_PASSPHRASE} \
-            -DnexusUrl=https://oss.sonatype.org \
-            -DautoReleaseAfterClose=true \
-            -DaltDeploymentRepository=repo::default::https://oss.sonatype.org/service/local/staging/deploy/maven2 \
             -DskipTests=true
     - name: Revoke token
       if: always()
       run: |
-        curl -X POST -s -H "X-Vault-Token: ${VAULT_TOKEN}" ${{ secrets.VAULT_ADDR }}/v1/auth/token/revoke-self
+        curl -X POST -s -H "X-Vault-Token: ${VAULT_TOKEN}" ${{ secrets.VAULT_ADDR }}/v1/auth/token/revoke-self || true

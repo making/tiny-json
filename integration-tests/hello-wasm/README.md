@@ -1,12 +1,22 @@
 # Hello WASM (Java)
 
-https://github.com/fermyon/teavm-wasi
+Compiles a tiny-json consumer to WebAssembly with
+[rontolisp](https://github.com/making/rontolisp)'s experimental Java front end and runs
+the module with [wasmtime](https://wasmtime.dev). It shows that tiny-json stays inside
+the subset of Java that the front end compiles and that it works without a JDK.
 
-```
-./mvnw clean package
+## Requirements
+
+- Java 21+ and rontolisp (`RONTOLISP_JAR` or `rontolisp` on `PATH`)
+- wasmtime 47+
+
+## Run
+
+```bash
+./run.sh
 ```
 
-```
-$ echo '{"body":"WASM"}' | wasmtime target/generated/wasm/teavm-wasm/classes.wasm
-{"data":"Hello WASM!"}
+```bash
+$ echo '{"body":"WASM"}' | wasmtime target/main.wasm
+{"data":"Hello WASM!","status":200,"base64":false,"headers":{"X-Generated-By":"wasm-workers-server"},"kv":{}}
 ```

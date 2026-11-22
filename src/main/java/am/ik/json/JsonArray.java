@@ -18,14 +18,10 @@ package am.ik.json;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 public class JsonArray {
-	private final List<JsonNode> values;
 
-	public JsonArray() {
-		this.values = new ArrayList<>();
-	}
+	private final List<JsonNode> values = new ArrayList<>();
 
 	public JsonArray add(JsonNode value) {
 		this.values.add(value);
@@ -50,6 +46,15 @@ public class JsonArray {
 
 	@Override
 	public String toString() {
-		return Objects.toString(this.values);
+		final StringBuilder sb = new StringBuilder("[");
+		int i = 0;
+		for (JsonNode value : this.values) {
+			if (i++ > 0) {
+				sb.append(',');
+			}
+			sb.append(value);
+		}
+		return sb.append(']').toString();
 	}
+
 }

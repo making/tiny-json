@@ -22,11 +22,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 public class JsonObject {
-	private final Map<String, JsonNode> properties;
 
-	public JsonObject() {
-		this.properties = new LinkedHashMap<>();
-	}
+	private final Map<String, JsonNode> properties = new LinkedHashMap<>();
 
 	public JsonObject put(String key, JsonNode value) {
 		this.properties.put(key, value);
@@ -34,47 +31,37 @@ public class JsonObject {
 	}
 
 	public JsonObject put(String key, JsonArray value) {
-		this.properties.put(key, new JsonNode(value));
-		return this;
+		return put(key, new JsonNode(value));
 	}
 
 	public JsonObject put(String key, JsonObject value) {
-		this.properties.put(key, new JsonNode(value));
-		return this;
+		return put(key, new JsonNode(value));
 	}
 
 	public JsonObject put(String key, String value) {
-		this.properties.put(key, new JsonNode(value));
-		return this;
+		return put(key, new JsonNode(value));
 	}
 
 	public JsonObject put(String key, int value) {
-		this.properties.put(key, new JsonNode(value));
-		return this;
+		return put(key, new JsonNode(value));
 	}
 
 	public JsonObject put(String key, float value) {
-		this.properties.put(key, new JsonNode(value));
-		return this;
+		return put(key, new JsonNode(value));
 	}
 
 	public JsonObject put(String key, boolean value) {
-		this.properties.put(key, new JsonNode(value));
-		return this;
+		return put(key, new JsonNode(value));
 	}
 
 	public JsonNode get(String key) {
 		final JsonNode value = this.properties.get(key);
-		if (value == null) {
-			return new JsonNode(null);
-		}
-		return value;
+		return value != null ? value : new JsonNode(null);
 	}
 
 	public boolean containsKey(String key) {
 		return this.properties.containsKey(key);
 	}
-
 
 	public Set<String> keySet() {
 		return this.properties.keySet();
@@ -98,19 +85,15 @@ public class JsonObject {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("{");
-		final int size = this.properties.size();
+		final StringBuilder sb = new StringBuilder("{");
 		int i = 0;
 		for (Entry<String, JsonNode> entry : this.properties.entrySet()) {
-			String k = entry.getKey();
-			JsonNode v = entry.getValue();
-			sb.append("\"").append(k).append("\"").append(":").append(v);
-			if (++i != size) {
-				sb.append(",");
+			if (i++ > 0) {
+				sb.append(',');
 			}
+			sb.append('"').append(JsonNode.escape(entry.getKey())).append("\":").append(entry.getValue());
 		}
-		sb.replace(sb.length(), sb.length(), "}");
-		return sb.toString();
+		return sb.append('}').toString();
 	}
+
 }
